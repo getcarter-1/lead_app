@@ -1,0 +1,13 @@
+<div id="leads-container">
+  {% if agent_leads %}
+  <div class="mb-2 text-sm text-gray-500">{{ agent_leads|length }} active lead{{ 's' if agent_leads|length != 1 }}</div>
+  {% for lead in agent_leads %}
+    {% include "partials/lead_card.html" %}
+  {% endfor %}
+  {% else %}
+  <div class="text-center py-12 text-gray-400">
+    <div class="text-4xl mb-2">📭</div>
+    <p class="text-sm">No active leads for {{ agent.display_name }}.</p>
+  </div>
+  {% endif %}
+</div>

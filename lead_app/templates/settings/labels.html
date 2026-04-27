@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Gmail Labels{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-bold text-gray-800">Monitored Gmail Labels</h1>
+  <a href="{{ url_for('settings.new_label') }}"
+     class="bg-indigo-600 text-white text-sm px-4 py-2 rounded hover:bg-indigo-700 transition">+ Add Label</a>
+</div>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-xs text-gray-500 uppercase text-left">
+      <tr>
+        <th class="px-4 py-3">Provider Name</th>
+        <th class="px-4 py-3">Gmail Label Path</th>
+        <th class="px-4 py-3">Gmail Label ID</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for label in labels %}
+      <tr class="hover:bg-gray-50 {% if not label.is_active %}opacity-50{% endif %}">
+        <td class="px-4 py-3 font-medium">{{ label.provider_display_name }}</td>
+        <td class="px-4 py-3 text-gray-600 font-mono text-xs">{{ label.gmail_label_path }}</td>
+        <td class="px-4 py-3 text-gray-400 font-mono text-xs">{{ label.gmail_label_id }}</td>
+        <td class="px-4 py-3">
+          {% if label.is_active %}
+          <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Active</span>
+          {% else %}
+          <span class="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded">Inactive</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex gap-3">
+            <a href="{{ url_for('settings.edit_label', label_id=label.id) }}"
+               class="text-indigo-600 hover:underline text-xs">Edit</a>
+            <form method="POST" action="{{ url_for('settings.toggle_label', label_id=label.id) }}" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button type="submit" class="text-xs {% if label.is_active %}text-red-500{% else %}text-green-600{% endif %} hover:underline">
+                {{ 'Deactivate' if label.is_active else 'Activate' }}
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400 text-sm">No labels configured yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

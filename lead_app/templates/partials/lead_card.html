@@ -1,0 +1,69 @@
+{% set can_edit_outcome = current_user.is_manager_or_admin or (
+    current_user.agent_profile and lead.assigned_agent_profile_id == current_user.agent_profile.id
+) %}
+{% set outcome_locked = (current_user.role == 'agent' and lead.has_outcome) %}
+
+<div id="lead-card-{{ lead.id }}" class="bg-white border border-gray-200 rounded-lg shadow-sm mb-3">
+  <div class="flex flex-wrap items-center gap-2 px-4 py-2 bg-gray-50 rounded-t-lg border-b border-gray-200">
+    <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-0.5 rounded">
+      {{ lead.provider_display_name }}
+    </span>
+    <span class="text-xs text-gray-500">{{ lead.email_received_at.strftime('%d %b %Y %H:%M') if lead.email_received_at else '—' }} UTC</span>
+    <span class="text-xs text-gray-700 font-medium">{{ lead.sender_display_name or lead.sender_email }}</span>
+    <span class="text-xs text-gray-500">&#60;{{ lead.sender_email }}&#62;</span>
+    {% if not lead.assigned_agent_profile_id %}
+    <span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded font-semibold">UNASSIGNED</span>
+    {% endif %}
+  </div>
+  <div class="px-4 pt-2 pb-1">
+    <div class="text-sm font-semibold text-gray-800 mb-2">{{ lead.email_subject or '(no subject)' }}</div>
+    <div x-data="{ expanded: false }">
+      <div class="lead-body text-xs text-gray-700 bg-gray-50 rounded p-2 max-h-40 overflow-y-auto">{{ lead.email_body_text or '(empty)' }}</div>
+    </div>
+  </div>
+  {% if can_edit_outcome and lead.is_active %}
+  <form hx-post="{{ url_for('leads.save_lead', lead_id=lead.id) }}"
+        hx-target="#lead-card-{{ lead.id }}"
+        hx-swap="outerHTML"
+        class="px-4 pb-3 pt-2 border-t border-gray-100 mt-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <div class="flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Outcome</label>
+        <select name="outcome_option_id"
+                {% if outcome_locked %}disabled{% endif %}
+                class="border border-gray-300 rounded px-2 py-1 text-sm {% if outcome_locked %}bg-gray-100 cursor-not-allowed{% endif %}">
+          <option value="">— Select —</option>
+          {% for o in outcomes %}
+          <option value="{{ o.id }}" {% if lead.outcome_option_id == o.id %}selected{% endif %}>{{ o.name }}</option>
+          {% endfor %}
+        </select>
+        {% if outcome_locked %}
+        <p class="text-xs text-gray-400 mt-0.5">Outcome locked after saving</p>
+        {% endif %}
+      </div>
+      <div class="flex-1 min-w-48">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+        <textarea name="notes" rows="2"
+                  class="w-full border border-gray-300 rounded px-2 py-1 text-sm resize-none">{{ lead.notes or '' }}</textarea>
+      </div>
+      {% if not outcome_locked %}
+      <button type="submit"
+              class="bg-indigo-600 text-white text-sm px-4 py-1.5 rounded hover:bg-indigo-700 transition">
+        Save
+      </button>
+      {% endif %}
+    </div>
+  </form>
+  {% else %}
+  <div class="px-4 pb-3 pt-2 border-t border-gray-100 mt-2 flex gap-6 text-xs text-gray-600">
+    <span><strong>Outcome:</strong> {{ lead.display_outcome }}</span>
+    {% if lead.notes %}<span><strong>Notes:</strong> {{ lead.notes }}</span>{% endif %}
+    {% if not lead.is_active %}
+    <span class="text-gray-400 italic">
+      Truncated {{ lead.truncation_datetime.strftime('%d %b %Y') if lead.truncation_datetime else '' }}
+    </span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

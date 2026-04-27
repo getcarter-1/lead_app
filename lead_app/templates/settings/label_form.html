@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="max-w-lg">
+  <h1 class="text-xl font-bold text-gray-800 mb-5">{{ title }}</h1>
+
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-5 text-sm text-blue-800">
+    <strong>Tip:</strong> Click
+    <button type="button" onclick="loadGmailLabels()"
+            class="underline font-medium hover:text-blue-600">Load Labels from Gmail</button>
+    to fetch your Gmail label names automatically.
+  </div>
+
+  <div id="gmail-label-list" class="mb-4"></div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <form method="POST">
+      {{ form.hidden_tag() }}
+
+      <div class="mb-4">
+        {{ form.provider_display_name.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+        {{ form.provider_display_name(class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500", placeholder="e.g. Bark") }}
+        <p class="text-xs text-gray-400 mt-1">Friendly name shown in the app.</p>
+      </div>
+
+      <div class="mb-4">
+        {{ form.gmail_label_path.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+        {{ form.gmail_label_path(id="lbl_path", class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500", placeholder="e.g. Leads/Bark") }}
+        <p class="text-xs text-gray-400 mt-1">Exact Gmail label name, including any nesting (e.g. Leads/Bark).</p>
+      </div>
+
+      <!-- gmail_label_id is kept for DB compatibility — we mirror the path value -->
+      <input type="hidden" name="gmail_label_id" id="lbl_id"/>
+
+      <div class="flex gap-3">
+        {{ form.submit(class="bg-indigo-600 text-white text-sm px-5 py-2 rounded hover:bg-indigo-700 transition") }}
+        <a href="{{ url_for('settings.labels') }}" class="text-sm text-gray-500 hover:underline self-center">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function loadGmailLabels() {
+  const el = document.getElementById('gmail-label-list');
+  el.innerHTML = '<p class="text-sm text-gray-500 italic">Connecting to Gmail IMAP…</p>';
+  fetch('/settings/labels/gmail-available')
+    .then(r => r.json())
+    .then(labels => {
+      if (!labels.length) {
+        el.innerHTML = '<p class="text-sm text-red-600">No user labels found, or Gmail not connected. Check your App Password in .env.</p>';
+        return;
+      }
+      let html = '<div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4 max-h-60 overflow-y-auto">';
+      labels.forEach(l => {
+        html += `<button type="button" onclick="selectLabel('${l.name.replace(/'/g,"\\'")}'  )"
+          class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 border-b border-gray-100 font-mono">
+          ${l.name}
+        </button>`;
+      });
+      html += '</div>';
+      el.innerHTML = html;
+    })
+    .catch(() => {
+      el.innerHTML = '<p class="text-sm text-red-600">Failed to connect to Gmail IMAP. Check the Alerts page for details.</p>';
+    });
+}
+
+function selectLabel(name) {
+  document.getElementById('lbl_path').value = name;
+  document.getElementById('lbl_id').value = name;  // id mirrors path for IMAP
+}
+
+// On page load, keep label_id in sync with path as user types
+document.addEventListener('DOMContentLoaded', function() {
+  const pathInput = document.getElementById('lbl_path');
+  const idInput = document.getElementById('lbl_id');
+  if (pathInput && idInput) {
+    // Pre-fill id from path if editing an existing label
+    if (pathInput.value && !idInput.value) {
+      idInput.value = pathInput.value;
+    }
+    pathInput.addEventListener('input', function() {
+      idInput.value = this.value;
+    });
+  }
+});
+</script>
+{% endblock %}

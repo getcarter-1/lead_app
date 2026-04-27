@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}System Alerts{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-bold text-gray-800">System Alerts</h1>
+  <a href="{{ url_for('alerts.alerts', show_resolved='0' if show_resolved else '1') }}"
+     class="text-sm text-indigo-600 hover:underline">
+    {{ 'Hide resolved' if show_resolved else 'Show resolved' }}
+  </a>
+</div>
+{% if alerts %}
+<div class="space-y-3">
+  {% for alert in alerts %}
+  <div class="bg-white border rounded-xl px-4 py-3 shadow-sm flex items-start gap-4
+    {% if alert.severity == 'critical' %}border-red-400
+    {% elif alert.severity == 'error' %}border-orange-300
+    {% elif alert.severity == 'warning' %}border-yellow-300
+    {% else %}border-blue-200{% endif %}">
+    <div class="shrink-0 text-lg mt-0.5">
+      {% if alert.severity == 'critical' %}🔴
+      {% elif alert.severity == 'error' %}🟠
+      {% elif alert.severity == 'warning' %}🟡
+      {% else %}🔵{% endif %}
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-xs font-semibold uppercase text-gray-500">{{ alert.alert_type.replace('_',' ') }}</span>
+        <span class="text-xs text-gray-400">{{ alert.created_at.strftime('%d %b %Y %H:%M') }} UTC</span>
+        {% if alert.is_resolved %}
+        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Resolved</span>
+        {% endif %}
+      </div>
+      <p class="text-sm text-gray-800">{{ alert.message }}</p>
+      {% if alert.related_label %}
+      <p class="text-xs text-gray-400 mt-1">Label: {{ alert.related_label }}</p>
+      {% endif %}
+    </div>
+    {% if not alert.is_resolved %}
+    <form method="POST" action="{{ url_for('alerts.resolve_alert', alert_id=alert.id) }}" class="shrink-0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit"
+              class="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1.5 rounded transition">
+        Resolve
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-16 text-gray-400">
+  <div class="text-4xl mb-3">✅</div>
+  <p class="text-sm">No unresolved alerts.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="max-w-lg">
+  <h1 class="text-xl font-bold text-gray-800 mb-5">{{ title }}</h1>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      {% for field in [form.username, form.email, form.display_name] %}
+      <div class="mb-4">
+        {{ field.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+        {{ field(class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500") }}
+        {% for err in field.errors %}<p class="text-xs text-red-600 mt-1">{{ err }}</p>{% endfor %}
+      </div>
+      {% endfor %}
+      <div class="mb-4">
+        {{ form.balance_integer.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+        {{ form.balance_integer(class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500") }}
+        <p class="text-xs text-gray-400 mt-1">Higher balance = less likely to receive next lead.</p>
+      </div>
+      <div class="mb-4">
+        {{ form.password.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+        {{ form.password(class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500") }}
+        {% if agent is defined %}<p class="text-xs text-gray-400 mt-1">Leave blank to keep current password.</p>{% endif %}
+      </div>
+      <div class="mb-5">
+        {{ form.confirm_password.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+        {{ form.confirm_password(class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500") }}
+      </div>
+      <div class="flex gap-3">
+        {{ form.submit(class="bg-indigo-600 text-white text-sm px-5 py-2 rounded hover:bg-indigo-700 transition") }}
+        <a href="{{ url_for('settings.agents') }}" class="text-sm text-gray-500 hover:underline self-center">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

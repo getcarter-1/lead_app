@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Agent Dashboards{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold text-gray-800 mb-4">Agent Dashboards</h1>
+<div class="flex gap-6">
+  <!-- Agent selector sidebar -->
+  <div class="w-48 shrink-0">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {% for agent in agents %}
+      <button
+        hx-get="{{ url_for('leads.agent_leads_partial', agent_id=agent.id) }}"
+        hx-target="#leads-container"
+        hx-swap="innerHTML"
+        class="w-full text-left px-3 py-2.5 text-sm border-b border-gray-100 hover:bg-indigo-50 transition
+               {% if selected_agent and selected_agent.id == agent.id %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-gray-700{% endif %}">
+        <div>{{ agent.display_name }}</div>
+        <div class="text-xs text-gray-400 mt-0.5">{{ agent.active_lead_count }} active</div>
+      </button>
+      {% else %}
+      <div class="px-3 py-4 text-xs text-gray-400">No agents configured.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Leads area -->
+  <div class="flex-1" id="leads-container">
+    {% if selected_agent %}
+      {% if selected_leads %}
+      <div class="mb-2 text-sm text-gray-500">
+        {{ selected_leads|length }} active lead{{ 's' if selected_leads|length != 1 }}
+      </div>
+      {% set outcomes = [] %}
+      {% for lead in selected_leads %}
+        {% include "partials/lead_card.html" %}
+      {% endfor %}
+      {% else %}
+      <div class="text-center py-16 text-gray-400">
+        <div class="text-4xl mb-2">📭</div>
+        <p class="text-sm">No active leads for {{ selected_agent.display_name }}.</p>
+      </div>
+      {% endif %}
+    {% else %}
+    <div class="text-center py-16 text-gray-400 text-sm">Select an agent to view their leads.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

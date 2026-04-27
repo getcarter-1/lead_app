@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}My Leads{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-bold text-gray-800">My Leads</h1>
+  {% if agent %}
+  <span class="text-sm text-gray-500">
+    Score: {{ agent.distribution_score }}
+    ({{ agent.active_lead_count }} leads + balance {{ agent.balance_integer }})
+  </span>
+  {% endif %}
+</div>
+
+{% if not agent %}
+<div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm text-yellow-800">
+  Your account does not have an agent profile. Contact your manager.
+</div>
+{% elif agent_leads %}
+{% set outcomes = [] %}
+{% for lead in agent_leads %}
+  {% include "partials/lead_card.html" %}
+{% endfor %}
+{% else %}
+<div class="text-center py-16 text-gray-400">
+  <div class="text-5xl mb-3">🎉</div>
+  <p class="text-sm">No active leads assigned to you.</p>
+</div>
+{% endif %}
+{% endblock %}

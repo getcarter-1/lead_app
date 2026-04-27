@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Vault{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-bold text-gray-800">Vault</h1>
+  <a href="{{ url_for('vault.export_csv', **request.args) }}"
+     class="bg-green-600 text-white text-sm px-4 py-2 rounded hover:bg-green-700 transition">
+    ⬇ Export CSV
+  </a>
+</div>
+
+<!-- Filters -->
+<form method="GET" class="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex flex-wrap gap-3 items-end shadow-sm">
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">From</label>
+    <input type="date" name="start_date" value="{{ request.args.get('start_date','') }}"
+           class="border border-gray-300 rounded px-2 py-1.5 text-sm"/>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">To</label>
+    <input type="date" name="end_date" value="{{ request.args.get('end_date','') }}"
+           class="border border-gray-300 rounded px-2 py-1.5 text-sm"/>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Provider</label>
+    <select name="provider" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+      {{ form.provider }}
+    </select>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Agent</label>
+    <select name="agent" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+      {{ form.agent }}
+    </select>
+  </div>
+  <button type="submit" class="bg-indigo-600 text-white text-sm px-4 py-1.5 rounded hover:bg-indigo-700 transition">
+    Filter
+  </button>
+  <a href="{{ url_for('vault.vault') }}" class="text-sm text-gray-500 hover:underline self-center">Clear</a>
+</form>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+  <table class="w-full text-xs">
+    <thead class="bg-gray-50 text-left text-gray-500 uppercase tracking-wider">
+      <tr>
+        <th class="px-3 py-3">ID</th>
+        <th class="px-3 py-3">Received</th>
+        <th class="px-3 py-3">Provider</th>
+        <th class="px-3 py-3">Sender</th>
+        <th class="px-3 py-3">Subject</th>
+        <th class="px-3 py-3">Agent</th>
+        <th class="px-3 py-3">Outcome</th>
+        <th class="px-3 py-3">Status</th>
+        <th class="px-3 py-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for lead in leads.items %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-3 py-2 text-gray-500">{{ lead.id }}</td>
+        <td class="px-3 py-2 whitespace-nowrap">
+          {{ lead.email_received_at.strftime('%d %b %y %H:%M') if lead.email_received_at else '—' }}
+        </td>
+        <td class="px-3 py-2">
+          <span class="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-xs">{{ lead.provider_display_name }}</span>
+        </td>
+        <td class="px-3 py-2 max-w-xs truncate">{{ lead.sender_email }}</td>
+        <td class="px-3 py-2 max-w-xs truncate">{{ lead.email_subject or '—' }}</td>
+        <td class="px-3 py-2">{{ lead.assigned_agent_name_snapshot or '—' }}</td>
+        <td class="px-3 py-2">{{ lead.display_outcome }}</td>
+        <td class="px-3 py-2">
+          {% if lead.is_active %}
+          <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Active</span>
+          {% elif lead.is_incomplete %}
+          <span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded">Incomplete</span>
+          {% else %}
+          <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Complete</span>
+          {% endif %}
+        </td>
+        <td class="px-3 py-2">
+          <a href="{{ url_for('vault.edit_lead', lead_id=lead.id) }}"
+             class="text-indigo-600 hover:underline">Edit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+<div class="flex justify-between items-center mt-4 text-sm text-gray-600">
+  <span>Showing {{ leads.items|length }} of {{ leads.total }} records</span>
+  <div class="flex gap-2">
+    {% if leads.has_prev %}
+    <a href="{{ url_for('vault.vault', page=leads.prev_num, **request.args) }}"
+       class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">← Prev</a>
+    {% endif %}
+    {% if leads.has_next %}
+    <a href="{{ url_for('vault.vault', page=leads.next_num, **request.args) }}"
+       class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Next →</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
